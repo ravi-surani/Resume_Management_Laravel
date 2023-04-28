@@ -65,7 +65,7 @@ class Controller extends BaseController
             $data = $validator->validated();
 
 
-            Interviews::where('id', $data['interviewId'])->update(['total_rating' => $data['total_rating'], "status" => false]);
+            // Interviews::where('id', $data['interviewId'])->update(['total_rating' => $data['total_rating'], "status" => false]);
 
             if (isset($data['self_rating'])) {
                 foreach ($data['self_rating'] as $key) {
@@ -73,14 +73,16 @@ class Controller extends BaseController
                 }
             }
             if (isset($data['theory_rating'])) {
-                foreach ($data['theory_rating'] as $key) {
-
+                foreach ($data['theory_rating'] as $key => $val) {
+                    // dump($data['theory_rating'][$key]);
+                    // // dump($key);
+                    // dd('s');
                     CandidateSkills::where([['candidate_master_id', $data['candidateId']], ['skill_master_id', $key]])->update(['theory_rating' => $data['theory_rating'][$key]]);
                 }
             }
             if (isset($data['practical_rating'])) {
 
-                foreach ($data['practical_rating'] as $key) {
+                foreach ($data['theory_rating'] as $key => $val) {
                     CandidateSkills::where([['candidate_master_id', $data['candidateId']], ['skill_master_id', $key]])->update(['practical_rating' => $data['practical_rating'][$key]]);
                 }
             }

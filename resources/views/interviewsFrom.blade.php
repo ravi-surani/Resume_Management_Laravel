@@ -51,9 +51,14 @@
                                 Candidate Details
                             </div>
                             <div class="card-body">
-                                <div class="d-flex">
-                                    <label class="card-title  h6 "> Name : </label>
-                                    <span class="h6">{{ $interviews->Candidate->name }}</span>
+                                <div class="d-flex justify-content-between">
+                                    <div class="d-flex">
+                                        <label class="card-title  h6 "> Name : </label>
+                                        <span class="h6">{{ $interviews->Candidate->name }}</span>
+                                    </div>
+
+                                    <a href={{ $interviews->Candidate->resume_id }} class='btn btn-primary btn-sm'
+                                        target='blanck'> Resume </a>
                                 </div>
                                 <hr class="my-2" />
                                 <div class="row p-0 ">

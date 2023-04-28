@@ -34,8 +34,8 @@ class   CandidateMasterController extends Controller
             "dob" => "nullable",
             "mode_of_work_id" => "required",
             "degree_id" => "required",
-            "passing_year" => "required",
-            "passing_grade" => "required",
+            "passing_year" => "nullable",
+            "passing_grade" => "nullable",
             "total_experience" => "required",
             "current_salary" => "required",
             "expected_salary" => "required",
@@ -62,17 +62,14 @@ class   CandidateMasterController extends Controller
 
             $validated = $validator->validated();
             $fileName = time() . '.' . $request->resume_id->getClientOriginalExtension();
-            $request->resume_id->getClientOriginalName();
 
 
-            $path = Storage::disk('s3')->put($fileName, file_get_contents($request->resume_id));
+
+            $path = Storage::disk('s3')->put("files/" . $fileName, file_get_contents($request->resume_id), 'public');
             $url = Storage::disk('s3')->url($path);
 
 
-            dump($path);
-            dd($url);
-
-            $validated['resume_id'] = Storage::disk('s3')->url($path);
+            $validated['resume_id'] = 'https://weybee-recruitment.s3.ap-southeast-1.amazonaws.com/files/' . $fileName;
             $candidate = CandidateMaster::create($validated);
 
             // $candidate->Skills()->attach($validated['skills']);
@@ -141,25 +138,25 @@ class   CandidateMasterController extends Controller
             "name" => "required|string",
             "email" => "required|email",
             "contect_no" => "required|min:10|max:12",
-            "dob" => "nullable|date",
+            "dob" => "nullable",
             "mode_of_work_id" => "required",
             "degree_id" => "required",
-            "passing_year" => "required",
-            "passing_grade" => "required",
+            "passing_year" => "nullable",
+            "passing_grade" => "nullable",
             "total_experience" => "required",
             "current_salary" => "required",
             "expected_salary" => "required",
-            "is_negotiable" => "required",
-            "notice_period" => "required",
-            "address" => "required",
-            "city" => "required",
-            "state" => "required",
-            "countary" => "required",
-            "recruitment_status_id" => "required",
-            "source_id" => "required",
-            "skills" => "required",
+            "is_negotiable" => "nullable",
+            "notice_period" => "nullable",
+            "address" => "nullable",
+            "city" => "nullable",
+            "state" => "nullable",
+            "countary" => "nullable",
             "resume_id" => "nullable",
             "remarks" => "nullable",
+            "recruitment_status_id" => "nullable",
+            "source_id" => "nullable",
+            "skills" => "nullable",
             "previs_companies" => "nullable",
         ]);
 
