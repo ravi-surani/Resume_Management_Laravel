@@ -31,6 +31,7 @@ class SkillMasterController extends Controller
         $validator = Validator::make($request->all(), [
             'skill' => 'required|string',
             'skill_type_id' => 'required',
+            'status' => 'required'
         ]);
 
         if ($validator->fails()) {
@@ -41,6 +42,7 @@ class SkillMasterController extends Controller
         }
 
         $validated = $validator->validated();
+        $validated['status'] = $validated['status'] == 'true' ? 1 : 0;
         $skilltype = SkillMaster::create($validated);
 
         return response()->json([
@@ -54,7 +56,7 @@ class SkillMasterController extends Controller
         $validator = Validator::make($request->all(), [
             'skill' => 'required|string',
             'skill_type_id' => 'required',
-            'status' => 'nullable',
+            'status' => 'required',
         ]);
 
         if ($validator->fails()) {
