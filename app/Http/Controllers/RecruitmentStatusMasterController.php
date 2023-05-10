@@ -30,6 +30,7 @@ class RecruitmentStatusMasterController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'recruitment_status' => 'required|string',
+            'status' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -40,6 +41,7 @@ class RecruitmentStatusMasterController extends Controller
         }
 
         $validated = $validator->validated();
+        $validated['status'] = $validated['status'] == 'true' ? 1 : 0;
         $recruitmentStatus = RecruitmentStatusMaster::create($validated);
 
         return response()->json([
@@ -52,7 +54,7 @@ class RecruitmentStatusMasterController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'recruitment_status' => 'required|string',
-            'status' => 'nullable',
+            'status' => 'required',
         ]);
 
         if ($validator->fails()) {
