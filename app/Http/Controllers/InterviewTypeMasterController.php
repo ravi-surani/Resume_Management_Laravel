@@ -30,7 +30,7 @@ class InterviewTypeMasterController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'interview_type' => 'required|string',
-            'status' => 'nullable',
+            'status' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -41,6 +41,7 @@ class InterviewTypeMasterController extends Controller
         }
 
         $validated = $validator->validated();
+        $validated['status'] = $validated['status'] == 'true' ? 1 : 0;
         $interviewType = InterviewTypeMaster::create($validated);
 
         return response()->json([
@@ -53,7 +54,7 @@ class InterviewTypeMasterController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'interview_type' => 'required|string',
-            'status' => 'nullable',
+            'status' => 'required',
         ]);
 
         if ($validator->fails()) {
