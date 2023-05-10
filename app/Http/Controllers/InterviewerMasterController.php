@@ -32,6 +32,7 @@ class InterviewerMasterController extends Controller
             'name' => 'required|string',
             "email" => "required|email|unique:interviewer_masters",
             "contect_no" => "required|min:10|max:12|unique:interviewer_masters",
+            'status' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -42,6 +43,7 @@ class InterviewerMasterController extends Controller
         }
 
         $validated = $validator->validated();
+        $validated['status'] = $validated['status'] == 'true' ? 1 : 0;
         $Interviewer = InterviewerMaster::create($validated);
 
         return response()->json([
@@ -56,7 +58,7 @@ class InterviewerMasterController extends Controller
             'name' => 'required|string',
             "email" => "required|email",
             "contect_no" => "required|min:10|max:12",
-            'status' => 'nullable',
+            'status' => 'required',
         ]);
 
         if ($validator->fails()) {
