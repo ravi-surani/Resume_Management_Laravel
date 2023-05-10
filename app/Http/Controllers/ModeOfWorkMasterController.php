@@ -30,7 +30,7 @@ class ModeOfWorkMasterController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'mode_of_work' => 'required|string',
-            'status' => 'nullable',
+            'status' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -41,6 +41,7 @@ class ModeOfWorkMasterController extends Controller
         }
 
         $validated = $validator->validated();
+        $validated['status'] = $validated['status'] == 'true' ? 1 : 0;
         $recruitmentStatus = ModeOfWorkMaster::create($validated);
 
         return response()->json([
@@ -53,7 +54,7 @@ class ModeOfWorkMasterController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'mode_of_work' => 'required|string',
-            'status' => 'nullable',
+            'status' => 'required',
         ]);
 
         if ($validator->fails()) {
