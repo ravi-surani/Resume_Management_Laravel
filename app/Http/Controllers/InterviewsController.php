@@ -82,7 +82,7 @@ class InterviewsController extends Controller
             // $decrypted = decrypt($encrypted);
 
             $interviewLink = url('/')."/reviewsubmit/".$interview['id']."/" . $enc;
-            Mail::to($interviewer->email)->send(new interviewMail(["url" => $interviewLink]));
+            // Mail::to($interviewer->email)->send(new interviewMail(["url" => $interviewLink]));
             // ---------whatsapp
             try {
                 $template_name = 'client_leave_reminder'; 
