@@ -6,6 +6,7 @@ use App\Mail\interviewMail;
 use App\Models\CandidateMaster;
 use App\Models\InterviewerMaster;
 use App\Models\Interviews;
+use App\Models\InteviewScheduleMapping;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail as FacadesMail;
@@ -67,9 +68,36 @@ class InterviewsController extends Controller
             $interview = Interviews::create($validated);
             $interviewer = InterviewerMaster::where('id', $validated['interviewer_id'])->first();
 
-            $enc = encrypt(['cid' => $validated['candidate_master_id'], 'iid' => $interview['id']]);
+            // $enc = encrypt(['cid' => $validated['candidate_master_id'], 'iid' => $interview['id']]);
+            // Encrypt the array
+            $encrypted = encrypt(['cid' => $validated['candidate_master_id'], 'iid' => $interview['id']]);
 
-            Mail::to($interviewer->email)->send(new interviewMail(["url" => "http://127.0.0.1:8000/reviewsubmit/" . $enc]));
+            $enc = time();
+            $InteviewScheduleMapping = new InteviewScheduleMapping();
+            $InteviewScheduleMapping->unique_code = $enc;
+            $InteviewScheduleMapping->encrypted_data = $encrypted;
+            $InteviewScheduleMapping->save();
+
+            // Decrypt the encrypted message
+            // $decrypted = decrypt($encrypted);
+
+            $interviewLink = url('/')."/reviewsubmit/".$interview['id']."/" . $enc;
+            Mail::to($interviewer->email)->send(new interviewMail(["url" => $interviewLink]));
+            // ---------whatsapp
+            try {
+                $template_name = 'client_leave_reminder'; 
+                $candidateDetails = CandidateMaster::select('contect_no','name')->where('id', $validated['candidate_master_id'])->first();
+                $message = 'Interview Details';
+    
+                $params = [
+                    ['type' => 'text', 'text' =>  $interviewLink],
+                    ['type' => 'text', 'text' => $candidateDetails['name']],
+                ];
+                SendSMS::instance()->sendmsg($candidateDetails['contect_no'], $message, $template_name, $params);
+            } catch (\Throwable $th) {
+                //throw $th;
+            }
+            // ---------whatsapp
 
             return response()->json([
                 'success' => true,
@@ -106,6 +134,21 @@ class InterviewsController extends Controller
         return response()->json([
             'success' => $candidate ? true : false,
             'data' => ["interviews" => $interviews, "candidate" => $candidate, "skills" => $skills]
+        ]);
+    }
+    public function interviewById(Request $request)
+    {
+        $interview = Interviews::where('id', $request->id)->with(
+            "Interview_type",
+            "Interviewer_id",
+            "Interview_mode",
+        )->first();
+
+        $candidate = CandidateMaster::where('id', $interview->candidate_master_id)->with('Recruitment_Status', 'Source', 'ModeOfWork')->get();
+
+        return response()->json([
+            'success' => $candidate ? true : false,
+            'data' => ["interview" => $interview, "candidate" => $candidate]
         ]);
     }
 

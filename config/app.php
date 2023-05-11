@@ -16,6 +16,7 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
+    'whatsapp_token' => env('WHATSAPP_TOKEN', ''),
 
     /*
     |--------------------------------------------------------------------------

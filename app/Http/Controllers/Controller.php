@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CandidateSkills;
 use App\Models\Interviews;
 use App\Models\User;
+use App\Models\InteviewScheduleMapping;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
@@ -18,10 +19,10 @@ class Controller extends BaseController
     use AuthorizesRequests, ValidatesRequests;
 
 
-    public function reviewSubmitForm(Request $request)
+    public function reviewSubmitForm(Request $request, $interviewId)
     {
-
-        $data = decrypt($request->route('details'));
+        $encrypted_data = InteviewScheduleMapping::where('unique_code',$request->route('details'))->value('encrypted_data');
+        $data = decrypt($encrypted_data);
 
         $interviews = Interviews::where('id', $data['iid'])->with(
             "Interview_type",

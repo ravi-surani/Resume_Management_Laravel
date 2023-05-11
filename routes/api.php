@@ -66,12 +66,14 @@ Route::get('getactiveinterviewmode', [InterviewModeMasterController::class, 'get
 Route::resource('degreemaster', DegreeMasterController::class)->only(['index', 'store', 'update', 'destroy']);
 Route::get('getactivedegree', [DegreeMasterController::class, 'getAactiveDegree']);
 
-Route::resource('candidatemaster', CandidateMasterController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
+Route::resource('candidatemaster', CandidateMasterController::class)->only(['index', 'store', 'show','destroy']);
+Route::post('candidatemaster/update/{candidatemaster}', [CandidateMasterController::class, 'update']);
 
 // Route::resource('interviews', InterviewsController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
 
 Route::get('interviews', [InterviewsController::class, 'index']);
 Route::get('interviews/{id}', [InterviewsController::class, 'show']);
+Route::get('interview/{id}', [InterviewsController::class, 'interviewById']);
 Route::post('interviews', [InterviewsController::class, 'store']);
 Route::put('interviews/{interviews}', [InterviewsController::class, 'update']);
 Route::delete('interviews/{interviews}', [InterviewsController::class, 'destroy']);

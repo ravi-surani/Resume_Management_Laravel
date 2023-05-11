@@ -168,7 +168,17 @@ class   CandidateMasterController extends Controller
         } else {
 
             $validated = $validator->validated();
-            $validated['dob'] =  $validated['dob'];
+
+            if ($request->hasFile('resume_id')) {
+                $fileName = time() . '.' . $request->resume_id->getClientOriginalExtension();
+                $path = Storage::disk('s3')->put("files/" . $fileName, file_get_contents($request->resume_id), 'public');
+                $url = Storage::disk('s3')->url($path);
+                $validated['resume_id'] = 'https://weybee-recruitment.s3.ap-southeast-1.amazonaws.com/files/' . $fileName;
+            }
+
+            if(isset($validated['dob'])) {
+                $validated['dob'] =  $validated['dob'];
+            }
             $candidatemaster->update($validated);
 
             CandidateExperience::where('candidate_master_id', $candidatemaster->id)->delete();
