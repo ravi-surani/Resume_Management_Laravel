@@ -17,4 +17,9 @@ class CandidateSkills extends Model
         'practical_rating',
 
     ];
+    public function skillMaster() 
+    {
+        return $this->belongsTo(SkillMaster::class, 'skill_master_id', 'id');
+}
+
 }

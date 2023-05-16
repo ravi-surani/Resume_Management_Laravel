@@ -41,9 +41,9 @@ class CandidateMaster extends Model
         return $this->belongsToMany(SkillMaster::class, 'candidate_skills');
     }
 
-    public function SkillsDetails()
+    public function candidateSkills() 
     {
-        return $this->belongsToMany(CandidateSkills::class, 'candidate_skills', 'id', 'candidate_master_id');
+        return $this->hasMany(CandidateSkills::class, 'candidate_master_id', 'id');
     }
 
     public  function Source()
@@ -68,5 +68,10 @@ class CandidateMaster extends Model
     public  function CandidateExperience()
     {
         return $this->hasMany(CandidateExperience::class, 'candidate_master_id', 'id');
+    }
+
+    public  function Interviews()
+    {
+        return $this->hasMany(Interviews::class, 'candidate_master_id', 'id');
     }
 }

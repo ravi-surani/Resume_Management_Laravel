@@ -24,4 +24,8 @@ class SkillMaster extends Model
     {
         return $this->belongsToMany(CandidateMaster::class, 'candidate_skills');
     }
+    // public function Candidates()
+    // {
+    //     return $this->belongsToMany(CandidateMaster::class, 'candidate_skills', 'skill_master_id', 'candidate_master_id');
+    // }
 }

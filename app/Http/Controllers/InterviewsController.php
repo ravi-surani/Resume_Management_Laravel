@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail as FacadesMail;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 use Mail;
 
@@ -67,6 +68,41 @@ class InterviewsController extends Controller
             $validated = $validator->validated();
             $interview = Interviews::create($validated);
             $interviewer = InterviewerMaster::where('id', $validated['interviewer_id'])->first();
+            $candidateDetails = CandidateMaster::with('candidateSkills.skillMaster')->where('id', $validated['candidate_master_id'])->first()->toArray();
+            
+            $interviewDetail = Interviews::where('id', $interview->id)->with(
+                "Interview_type",
+                "Interviewer_id",
+                "Interview_mode",
+            )->first()->toArray();
+
+                // return $interviewDetail;
+
+            // $interviewerDetails = InterviewerMaster::where('id', $interview->interviewer_id)->first();
+            // return $candidateDetails;
+            $skillData = $candidateDetails['candidate_skills'];
+            $formattedSkills = array_map(function ($skillData) {
+                if ($skillData['experience'] == 1) {
+                    return $skillData['skill_master']['skill'] . ' => ' . $skillData['experience'].' year of experience';
+                }
+                return $skillData['skill_master']['skill'] . ' => ' . $skillData['experience'].' years of experience';
+            }, $skillData);
+            
+            // Use implode to join the strings together with a comma
+            $skillDetails = implode(', ', $formattedSkills);
+            
+            $dateTime = Carbon::parse($validated['date']);
+            $formattedDateTime = $dateTime->format('d-M-Y H:i');
+
+            $details = [];
+            $details['name'] = $interviewDetail['interviewer_id']['name'];
+            $details['candidateName'] = $candidateDetails['name'];
+            $details['skills'] = $skillDetails;
+            $details['date'] = $formattedDateTime;
+            $details['type'] = $interviewDetail['interview_type']['interview_type'];
+            $details['mode'] = $interviewDetail['interview_mode']['interview_mode'];
+            $details['details'] = $interviewDetail['location_link'];
+
 
             // $enc = encrypt(['cid' => $validated['candidate_master_id'], 'iid' => $interview['id']]);
             // Encrypt the array
@@ -82,18 +118,24 @@ class InterviewsController extends Controller
             // $decrypted = decrypt($encrypted);
 
             $interviewLink = url('/')."/reviewsubmit/".$interview['id']."/" . $enc;
-            // Mail::to($interviewer->email)->send(new interviewMail(["url" => $interviewLink]));
-            // ---------whatsapp
+            $details['linkToSubmitMarks'] = $interviewLink;
+            
+            Mail::to($interviewer->email)->send(new interviewMail($details));
             try {
-                $template_name = 'client_leave_reminder'; 
-                $candidateDetails = CandidateMaster::select('contect_no','name')->where('id', $validated['candidate_master_id'])->first();
+                $template_name = 'recruitment'; 
                 $message = 'Interview Details';
     
                 $params = [
-                    ['type' => 'text', 'text' =>  $interviewLink],
                     ['type' => 'text', 'text' => $candidateDetails['name']],
+                    ['type' => 'text', 'text' => $candidateDetails['candidateName']],
+                    ['type' => 'text', 'text' => $candidateDetails['skills']],
+                    ['type' => 'text', 'text' => $candidateDetails['date']],
+                    ['type' => 'text', 'text' => $candidateDetails['type']],
+                    ['type' => 'text', 'text' => $candidateDetails['mode']],
+                    ['type' => 'text', 'text' => $candidateDetails['details']],
+                    ['type' => 'text', 'text' =>  $interviewLink],
                 ];
-                SendSMS::instance()->sendmsg($candidateDetails['contect_no'], $message, $template_name, $params);
+                SendSMS::instance()->sendmsg($interviewDetail['interviewer_id']['contect_no'], $message, $template_name, $params);
             } catch (\Throwable $th) {
                 //throw $th;
             }
