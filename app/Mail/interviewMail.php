@@ -27,7 +27,7 @@ class interviewMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Interview Mail',
+            subject: 'WeyBee - Interview Details',
         );
     }
 

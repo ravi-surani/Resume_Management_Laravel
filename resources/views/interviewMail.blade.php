@@ -6,5 +6,6 @@
 <p>Type : {{ $details['type'] }}</p>
 <p> Mode : {{ $details['mode'] }}</p>
 <p> Details : {{ $details['details'] }}</p>
-<p>Link to submit marks : {{ $details['linkToSubmitMarks'] }}</p>
-
+<p>Link to submit marks : {{ $details['linkToSubmitMarks'] }}</p><br />
+<p>Regards,</p>
+<p>WeyBee Solutions Pvt. Ltd.</p>

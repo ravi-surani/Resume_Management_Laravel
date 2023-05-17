@@ -60,37 +60,15 @@ class SendSMS
     function sendmsg($mobileno, $message,$template_name='',$params=array(),$button='',$countrycode='no')
     {
         if (!empty($mobileno) && $template_name!='') {
-            $response['whatsapp'] = $this->sendwhatsapp($mobileno, $template_name,$params,$message,$button,$countrycode);
+            return $this->sendwhatsapp($mobileno, $template_name,$params,$message,$button,$countrycode);
         }
-
-//        $apikey = "d9678e0d-aeb2-4463-912d-c8c2c8048dc1"; // weybee
-//        $clientId="041c7436-74f2-4a6b-bd78-555d92d47f6d";
-//
-//        $senderId = "WEYBEE";
-//        // Prepare you post parameters
-//        $data = array(
-//            'apikey' => $apikey,
-//            'clientid' => $clientId,
-//            'msisdn' => $mobileno,
-//            'sid' => $senderId,
-//            'msg' => $message,
-//            'fl' => "0",
-//            'gwid' => "2",
-//        );
-//
-//        list($header, $content) = $this->PostRequest("https://sms.nettyfish.com/vendorsms/pushsms.aspx",
-//            $data
-//        );
-//
-//        $response = json_decode($content, true); // decode reponse from json
-//        return $response;
     }
 
     public function sendwhatsapp($mobileno,$template_name, $params =array(),$message,$button='',$countrycode)
     {
+        // return $mobileno;
         //return 'success';
         $whatsapp_token = config('app.whatsapp_token');
-
         $res = array();
         $mobile_no = $mobileno;
         if($countrycode=='no') {
@@ -145,34 +123,27 @@ class SendSMS
                 ),
             ));
 
-          //  $response = curl_exec($curl);
-        $response = "success";
-
-
+           $response = curl_exec($curl);
             $err = curl_error($curl);
-
             curl_close($curl);
-
-
             if ($err) {
                 $res['error'] = "cURL Error #:" . $err;
             } else {
                 $res['success'] = $response;
             }
 
-            $employee = EmployeeModel::where('employeewhatsappnumber',$mobileno)->get()->first();
+            // $employee = EmployeeModel::where('employeewhatsappnumber',$mobileno)->get()->first();
 
-            $timesheet_log = new TimesheetLog();
-            $timesheet_log->module = 'Whatsapp';
-            $timesheet_log->module_id = 0;
-            $timesheet_log->user_id = (!empty($employee)?$employee->employeeid:0);
-            $timesheet_log->action = 'add';
-            $timesheet_log->before_action = $fields;
-            $timesheet_log->after_action = json_encode($res);
-            $timesheet_log->other = $message;
-            $timesheet_log->save();
-//        }
-
+            // $timesheet_log = new TimesheetLog();
+            // $timesheet_log->module = 'Whatsapp';
+            // $timesheet_log->module_id = 0;
+            // $timesheet_log->user_id = (!empty($employee)?$employee->employeeid:0);
+            // $timesheet_log->action = 'add';
+            // $timesheet_log->before_action = $fields;
+            // $timesheet_log->after_action = json_encode($res);
+            // $timesheet_log->other = $message;
+            // $timesheet_log->save();
+            // dd($response);
         return $res;
     }
 

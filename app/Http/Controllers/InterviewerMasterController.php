@@ -33,7 +33,11 @@ class InterviewerMasterController extends Controller
             "email" => "required|email|unique:interviewer_masters",
             "contect_no" => "required|min:10|max:12|unique:interviewer_masters",
             'status' => 'required',
-        ]);
+        ],
+        [   
+            'contect_no.unique'    => 'The contact number has already been taken.',
+        ]
+    );
 
         if ($validator->fails()) {
             return response()->json([

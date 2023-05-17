@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\interviewMail;
+use App\SendSMS;
 use App\Models\CandidateMaster;
 use App\Models\InterviewerMaster;
 use App\Models\Interviews;
@@ -83,9 +84,11 @@ class InterviewsController extends Controller
             $skillData = $candidateDetails['candidate_skills'];
             $formattedSkills = array_map(function ($skillData) {
                 if ($skillData['experience'] == 1) {
-                    return $skillData['skill_master']['skill'] . ' => ' . $skillData['experience'].' year of experience';
+                    // return $skillData['skill_master']['skill'] . ' => ' . $skillData['experience'].' year of experience';
+                    return $skillData['skill_master']['skill'] . ' (' . $skillData['experience'].' year' . ')';
                 }
-                return $skillData['skill_master']['skill'] . ' => ' . $skillData['experience'].' years of experience';
+                // return $skillData['skill_master']['skill'] . ' => ' . $skillData['experience'].' years of experience';
+                return $skillData['skill_master']['skill'] . ' (' . $skillData['experience'].' years' . ')';
             }, $skillData);
             
             // Use implode to join the strings together with a comma
@@ -126,21 +129,19 @@ class InterviewsController extends Controller
                 $message = 'Interview Details';
     
                 $params = [
-                    ['type' => 'text', 'text' => $candidateDetails['name']],
-                    ['type' => 'text', 'text' => $candidateDetails['candidateName']],
-                    ['type' => 'text', 'text' => $candidateDetails['skills']],
-                    ['type' => 'text', 'text' => $candidateDetails['date']],
-                    ['type' => 'text', 'text' => $candidateDetails['type']],
-                    ['type' => 'text', 'text' => $candidateDetails['mode']],
-                    ['type' => 'text', 'text' => $candidateDetails['details']],
+                    ['type' => 'text', 'text' => $details['name']],
+                    ['type' => 'text', 'text' => $details['candidateName']],
+                    ['type' => 'text', 'text' => $details['skills']],
+                    ['type' => 'text', 'text' => $details['date']],
+                    ['type' => 'text', 'text' => $details['type']],
+                    ['type' => 'text', 'text' => $details['mode']],
+                    ['type' => 'text', 'text' => $details['details']],
                     ['type' => 'text', 'text' =>  $interviewLink],
                 ];
                 SendSMS::instance()->sendmsg($interviewDetail['interviewer_id']['contect_no'], $message, $template_name, $params);
             } catch (\Throwable $th) {
-                //throw $th;
+            //     // throw $th;
             }
-            // ---------whatsapp
-
             return response()->json([
                 'success' => true,
                 'interview_details' => $interview,
@@ -209,6 +210,7 @@ class InterviewsController extends Controller
             "date" => 'required',
             "remarks" => 'nullable',
             'status' => 'nullable',
+            'location_link' => 'nullable'
         ]);
         if ($validator->fails()) {
             return response()->json([
