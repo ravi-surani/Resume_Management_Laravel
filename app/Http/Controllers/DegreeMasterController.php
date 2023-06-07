@@ -16,7 +16,23 @@ class DegreeMasterController extends Controller
             'data' => $degreeList,
         ]);
     }
-
+    public function getDegreesById(Request $request, $id)
+    {
+        $degree = DegreeMaster::find($id);
+    
+        if ($degree) {
+            return response()->json([
+                'success' => true,
+                'data' => $degree,
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Degree not found',
+            ], 404);
+        }
+    }
+    
     public function getAactiveDegree()
     {
         $degreeList = DegreeMaster::where('status', 1)->get();

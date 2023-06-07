@@ -44,7 +44,13 @@ class CandidateMaster extends Model
     public function candidateSkills() 
     {
         return $this->hasMany(CandidateSkills::class, 'candidate_master_id', 'id');
+    
     }
+    public function candidateAllSkills() 
+    {
+        return $this->belongsToMany(SkillMaster::class, 'candidate_skills', 'candidate_master_id', 'skill_master_id');
+    }
+
 
     public  function Source()
     {

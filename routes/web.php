@@ -15,4 +15,5 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/reviewsubmit/{interviewId}/{details}', [Controller::class, 'reviewSubmitForm']);
+Route::get('/review-submitted', [Controller::class, 'thankYouPage'])->name('review-submitted');
 Route::post('/reviewsubmit', [Controller::class, 'reviewSubmit']);

@@ -22,30 +22,51 @@ class InterviewsController extends Controller
     {
 
 
-
-        // $details = array(
-        //     'name' => "Alex"
-        // );
-        // Mail::send(['text' => 'interviewMail'], $details, function ($message) {
-        //     $message->to('revi@weybee.com', 'W3SCHOOLS')
-        //         ->subject('Basic test eMail from W3schools.');
-        //     $message->from('revi@weybee.com', 'Alex');
-        // });
-
-
-
-        // $InterviewList = DB::select('SELECT
-        // interviews.id,interviews.date,candidate_masters.name,candidate_masters.email,candidate_masters.contect_no,interview_type_masters.interview_type,recruitment_status_masters.recruitment_status
-        // from interviews LEFT JOIN candidate_masters on candidate_masters.id = interviews.candidate_master_id 
-        // LEFT JOIN interview_type_masters on interview_type_masters.id = interview_type_id
-        // LEFT JOIN recruitment_status_masters on recruitment_status_masters.id = candidate_masters.recruitment_status_id;');
-
         $InterviewList = Interviews::with('Candidate', 'Interview_type')->get();
         return response()->json([
             'success' => count($InterviewList) ? true : false,
             'data' => $InterviewList,
         ]);
     }
+    public function getActiveCandidateInterview(Request $request)
+    {
+        $perPage = $request->query('pagesize', 10); // Number of items per page (default: 10)
+        $searchQuery = $request->query('Search');
+        $interviewerId = $request->query('interviewer_id');
+        $interviewTypeId = $request->query('interview_type_id');
+        $interviewModeId = $request->query('interview_mode_id');
+
+    
+        $query = Interviews::with('Candidate', 'Interview_type', 'Interviewer_id', 'Interview_mode')
+            ->select('candidate_masters.*', 'interviews.*', 'recruitment_status_masters.recruitment_status')
+            ->leftJoin('candidate_masters', 'interviews.candidate_master_id', '=', 'candidate_masters.id')
+            ->leftJoin('recruitment_status_masters', 'candidate_masters.recruitment_status_id', '=', 'recruitment_status_masters.id')
+            ->whereIn('recruitment_status_masters.recruitment_status', ['Applied', 'In Process', 'On Hold']);
+    
+        if ($searchQuery) {
+            $query->whereHas('Candidate', function ($q) use ($searchQuery) {
+                $q->where('name', 'LIKE', '%' . $searchQuery . '%');
+            });
+        }
+        if ($interviewerId) {
+            $query->where('interviews.interviewer_id', $interviewerId);
+        }
+        if ($interviewTypeId) {
+            $query->where('interviews.interview_type_id', $interviewTypeId);
+        }
+        if ($interviewModeId) {
+            $query->where('interviews.interview_mode_id', $interviewModeId);
+        }
+    
+    
+        $InterviewList = $query->paginate($perPage);
+    
+        return response()->json([
+            'success' => $InterviewList->count() > 0,
+            'data' => $InterviewList,
+        ]);
+    }
+    
 
     public function store(Request $request)
     {
@@ -71,31 +92,51 @@ class InterviewsController extends Controller
             $interviewer = InterviewerMaster::where('id', $validated['interviewer_id'])->first();
             $candidateDetails = CandidateMaster::with('candidateSkills.skillMaster')->where('id', $validated['candidate_master_id'])->first()->toArray();
             
-            $interviewDetail = Interviews::where('id', $interview->id)->with(
-                "Interview_type",
-                "Interviewer_id",
-                "Interview_mode",
-            )->first()->toArray();
+            $skillDetails = $this->getSkillDetails($candidateDetails);
+            
+            $this->sendNotification($validated['candidate_master_id'], $validated['date'], $skillDetails, $interview, $candidateDetails, $interviewer);
+            
+            return response()->json([
+                'success' => true,
+                'interview_details' => $interview,
+            ]);
+        }
+        $details = [
+            'title' => 'Mail from ItSolutionStuff.com',
+            'body' => 'This is for testing email using smtp'
+        ];
 
-                // return $interviewDetail;
 
-            // $interviewerDetails = InterviewerMaster::where('id', $interview->interviewer_id)->first();
-            // return $candidateDetails;
+
+        return response()->json([
+            "success" => false,
+        ]);
+    }
+
+    private function getSkillDetails($candidateDetails) {
+
             $skillData = $candidateDetails['candidate_skills'];
             $formattedSkills = array_map(function ($skillData) {
                 if ($skillData['experience'] == 1) {
-                    // return $skillData['skill_master']['skill'] . ' => ' . $skillData['experience'].' year of experience';
                     return $skillData['skill_master']['skill'] . ' (' . $skillData['experience'].' year' . ')';
                 }
-                // return $skillData['skill_master']['skill'] . ' => ' . $skillData['experience'].' years of experience';
                 return $skillData['skill_master']['skill'] . ' (' . $skillData['experience'].' years' . ')';
             }, $skillData);
             
             // Use implode to join the strings together with a comma
             $skillDetails = implode(', ', $formattedSkills);
-            
-            $dateTime = Carbon::parse($validated['date']);
+            return $skillDetails;
+    }
+
+    private function sendNotification($candidate_master_id, $date, $skillDetails, $interview, $candidateDetails, $interviewer) {
+        $dateTime = Carbon::parse($date);
             $formattedDateTime = $dateTime->format('d-M-Y H:i');
+            
+            $interviewDetail = Interviews::where('id', $interview->id)->with(
+                "Interview_type",
+                "Interviewer_id",
+                "Interview_mode",
+            )->first()->toArray();
 
             $details = [];
             $details['name'] = $interviewDetail['interviewer_id']['name'];
@@ -106,10 +147,8 @@ class InterviewsController extends Controller
             $details['mode'] = $interviewDetail['interview_mode']['interview_mode'];
             $details['details'] = $interviewDetail['location_link'];
 
-
-            // $enc = encrypt(['cid' => $validated['candidate_master_id'], 'iid' => $interview['id']]);
             // Encrypt the array
-            $encrypted = encrypt(['cid' => $validated['candidate_master_id'], 'iid' => $interview['id']]);
+            $encrypted = encrypt(['cid' => $candidate_master_id, 'iid' => $interview['id']]);
 
             $enc = time();
             $InteviewScheduleMapping = new InteviewScheduleMapping();
@@ -117,13 +156,20 @@ class InterviewsController extends Controller
             $InteviewScheduleMapping->encrypted_data = $encrypted;
             $InteviewScheduleMapping->save();
 
-            // Decrypt the encrypted message
-            // $decrypted = decrypt($encrypted);
+            $eventTitle = 'Interview with ' . $candidateDetails['name'];
+            $fromDateTime = Carbon::createFromFormat('d-M-Y H:i', $formattedDateTime);
+            $toDateTime = $fromDateTime->copy()->addHour();// Add one hour to the "from" time to get the "to" time
+            $formattedFromDateTime = $fromDateTime->format('Ymd\THis');// Format the dates according to the specified format
+            $formattedToDateTime = $toDateTime->format('Ymd\THis');
+            $combinedDates = $formattedFromDateTime . '/' . $formattedToDateTime;// Combine the formatted dates
+
+            $googleCalendarUrl = "https://www.google.com/calendar/render?action=TEMPLATE&text={$eventTitle}&dates={$combinedDates}";            
 
             $interviewLink = url('/')."/reviewsubmit/".$interview['id']."/" . $enc;
             $details['linkToSubmitMarks'] = $interviewLink;
+            $details['googleCalendarUrl'] = $googleCalendarUrl;
             
-            Mail::to($interviewer->email)->send(new interviewMail($details));
+            Mail::to($interviewer->email)->send(new interviewMail($details,));
             try {
                 $template_name = 'recruitment'; 
                 $message = 'Interview Details';
@@ -142,21 +188,6 @@ class InterviewsController extends Controller
             } catch (\Throwable $th) {
             //     // throw $th;
             }
-            return response()->json([
-                'success' => true,
-                'interview_details' => $interview,
-            ]);
-        }
-        $details = [
-            'title' => 'Mail from ItSolutionStuff.com',
-            'body' => 'This is for testing email using smtp'
-        ];
-
-
-
-        return response()->json([
-            "success" => false,
-        ]);
     }
 
     public function show(Request $request)
@@ -166,7 +197,7 @@ class InterviewsController extends Controller
             "Interviewer_id",
             "Interview_mode",
         )->get();
-        $candidate = CandidateMaster::where('id', $request->id)->with('Recruitment_Status', 'Source', 'ModeOfWork')->get();
+        $candidate = CandidateMaster::where('id', $request->id)->with('Recruitment_Status', 'Source', 'ModeOfWork', 'Degree')->get();
 
         $skills = DB::select('SELECT * from candidate_skills 
          LEFT JOIN skill_masters on skill_masters.id= skill_master_id
@@ -187,11 +218,17 @@ class InterviewsController extends Controller
             "Interview_mode",
         )->first();
 
-        $candidate = CandidateMaster::where('id', $interview->candidate_master_id)->with('Recruitment_Status', 'Source', 'ModeOfWork')->get();
+        $candidate = CandidateMaster::where('id', $interview->candidate_master_id)
+                                    ->with('Recruitment_Status', 'Source', 'ModeOfWork', 'Degree', 'Skills')
+                                    ->get();
+        $skills = DB::select('SELECT * from candidate_skills 
+                        LEFT JOIN skill_masters on skill_masters.id= skill_master_id
+                        WHERE candidate_master_id = ?', [$request->id]);
+
 
         return response()->json([
             'success' => $candidate ? true : false,
-            'data' => ["interview" => $interview, "candidate" => $candidate]
+            'data' => ["interview" => $interview, "candidate" => $candidate,"skills" => $skills]
         ]);
     }
 
@@ -220,6 +257,13 @@ class InterviewsController extends Controller
         } else {
             $validated = $validator->validated();
             $interviews->update($validated);
+            $interviewer = InterviewerMaster::where('id', $validated['interviewer_id'])->first();
+            $candidateDetails = CandidateMaster::with('candidateSkills.skillMaster')->where('id', $validated['candidate_master_id'])->first()->toArray();
+            
+            $skillDetails = $this->getSkillDetails($candidateDetails);
+            
+            $this->sendNotification($validated['candidate_master_id'], $validated['date'], $skillDetails, $interviews, $candidateDetails, $interviewer);
+
 
             return response()->json([
                 'success' => true,

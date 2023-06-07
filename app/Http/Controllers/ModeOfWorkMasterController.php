@@ -26,6 +26,23 @@ class ModeOfWorkMasterController extends Controller
         ]);
     }
 
+    public function getModeofWorkById(Request $request, $id)
+    {
+        $modeofWork = ModeOfWorkMaster::find($id);
+    
+        if ($modeofWork) {
+            return response()->json([
+                'success' => true,
+                'data' => $modeofWork,
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mode of Work not found',
+            ], 404);
+        }
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [

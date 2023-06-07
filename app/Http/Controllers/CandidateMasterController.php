@@ -16,9 +16,73 @@ use Aws\S3\Exception\S3Exception;
 
 class   CandidateMasterController extends Controller
 {
-    public function index()
+
+public function index(Request $request)
+{
+    $perPage = $request->query('pagesize', 10); // Number of items per page (default: 10)
+    $searchQuery = $request->query('Search');
+    $degreeId = $request->query('degree_id');
+    $skillId = $request->query('skill_id');
+    $recruitmentStatusId = $request->query('recruitment_status_id');
+
+    $query = CandidateMaster::select(
+        'candidate_masters.*',
+        'recruitment_status_masters.recruitment_status',
+        'source_masters.source',
+        'degree_masters.degree',
+        'mode_of_work_masters.mode_of_work',
+        DB::raw('GROUP_CONCAT(skill_masters.skill) AS skills')
+    )
+        ->leftJoin('recruitment_status_masters', 'candidate_masters.recruitment_status_id', '=', 'recruitment_status_masters.id')
+        ->leftJoin('source_masters', 'candidate_masters.source_id', '=', 'source_masters.id')
+        ->leftJoin('degree_masters', 'candidate_masters.degree_id', '=', 'degree_masters.id')
+        ->leftJoin('mode_of_work_masters', 'candidate_masters.mode_of_work_id', '=', 'mode_of_work_masters.id')
+        ->leftJoin('candidate_skills', 'candidate_masters.id', '=', 'candidate_skills.candidate_master_id')
+        ->leftJoin('skill_masters', 'candidate_skills.skill_master_id', '=', 'skill_masters.id')
+        ->orderByDesc('candidate_masters.id')
+        ->groupBy('candidate_masters.id');
+
+    // Apply search filter
+    if ($searchQuery) {
+        $query->where(function ($q) use ($searchQuery) {
+            $q->where('candidate_masters.name', 'LIKE', '%' . $searchQuery . '%')
+                ->orWhere('skill_masters.skill', 'LIKE', '%' . $searchQuery . '%')
+                ->orWhere('candidate_masters.total_experience', 'LIKE', '%' . $searchQuery . '%')
+                ->orWhere('recruitment_status_masters.recruitment_status', 'LIKE', '%' . $searchQuery . '%');
+        });
+    }
+
+    if ($degreeId) {
+        $query->where('candidate_masters.degree_id', $degreeId);
+    }
+      if ($skillId) {
+        $query->whereHas('skills', function ($q) use ($skillId) {
+            $q->where('skill_masters.id', $skillId);
+        });
+    }
+
+    if ($recruitmentStatusId) {
+        $query->where('candidate_masters.recruitment_status_id', $recruitmentStatusId);
+    }
+
+    $candidateList = $query->paginate($perPage);
+
+    return response()->json([
+        'success' => count($candidateList) ? true : false,
+        'data' => $candidateList,
+    ]);
+}
+
+
+    public function getActiveCandidates()
     {
-        $candidateList = CandidateMaster::with('Skills', 'Source', 'Recruitment_Status', 'Degree', 'CandidateExperience', 'ModeOfWork')->get();
+        
+        $candidateList = CandidateMaster::select('candidate_masters.*','recruitment_status_masters.recruitment_status', 'source_masters.source')
+                                ->leftJoin('recruitment_status_masters', 'candidate_masters.recruitment_status_id', '=', 'recruitment_status_masters.id')
+                                ->leftJoin('source_masters', 'candidate_masters.source_id', '=', 'source_masters.id')
+                                ->whereIn('recruitment_status_masters.recruitment_status', ['Applied', 'In Process', 'On Hold'])
+                                ->orderByDesc('candidate_masters.id')
+                                ->get();
         return response()->json([
             'success' => count($candidateList) ? true : false,
             'data' => $candidateList,

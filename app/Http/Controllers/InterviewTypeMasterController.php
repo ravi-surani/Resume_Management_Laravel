@@ -26,6 +26,23 @@ class InterviewTypeMasterController extends Controller
         ]);
     }
 
+    public function getInterviewTypeById(Request $request, $id)
+    {
+        $interviewType = InterviewTypeMaster::find($id);
+    
+        if ($interviewType) {
+            return response()->json([
+                'success' => true,
+                'data' => $interviewType,
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Interview Type not found',
+            ], 404);
+        }
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [

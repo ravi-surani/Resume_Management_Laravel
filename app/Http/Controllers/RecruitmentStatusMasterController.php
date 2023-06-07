@@ -26,6 +26,23 @@ class RecruitmentStatusMasterController extends Controller
         ]);
     }
 
+    public function getRecruitmentStatusById(Request $request, $id)
+    {
+        $recruitmentStatus = RecruitmentStatusMaster::find($id);
+    
+        if ($recruitmentStatus) {
+            return response()->json([
+                'success' => true,
+                'data' => $recruitmentStatus,
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Recruitment Status not found',
+            ], 404);
+        }
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [

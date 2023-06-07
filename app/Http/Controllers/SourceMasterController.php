@@ -26,6 +26,24 @@ class SourceMasterController extends Controller
         ]);
     }
 
+    public function getSourceById(Request $request, $id)
+    {
+        $source = SourceMaster::find($id);
+    
+        if ($source) {
+            return response()->json([
+                'success' => true,
+                'data' => $source,
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Source not found',
+            ], 404);
+        }
+    }
+    
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [

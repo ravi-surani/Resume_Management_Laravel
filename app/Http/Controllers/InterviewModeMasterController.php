@@ -26,6 +26,23 @@ class InterviewModeMasterController extends Controller
         ]);
     }
 
+    public function getInterviewModeById(Request $request, $id)
+    {
+        $interviewMode = InterviewModeMaster::find($id);
+    
+        if ($interviewMode) {
+            return response()->json([
+                'success' => true,
+                'data' => $interviewMode,
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Interview Mode not found',
+            ], 404);
+        }
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [

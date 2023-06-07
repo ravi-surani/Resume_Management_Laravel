@@ -26,6 +26,23 @@ class InterviewerMasterController extends Controller
         ]);
     }
 
+    public function getInterviewerById(Request $request, $id)
+    {
+        $interviewer = InterviewerMaster::find($id);
+    
+        if ($interviewer) {
+            return response()->json([
+                'success' => true,
+                'data' => $interviewer,
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Interviewer not found',
+            ], 404);
+        }
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [

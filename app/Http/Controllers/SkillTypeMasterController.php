@@ -26,6 +26,24 @@ class SkillTypeMasterController extends Controller
         ]);
     }
 
+    public function getSkillTypeById(Request $request, $id)
+    {
+        $skillType = SkillTypeMaster::find($id);
+    
+        if ($skillType) {
+            return response()->json([
+                'success' => true,
+                'data' => $skillType,
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Skill Type not found',
+            ], 404);
+        }
+    }
+    
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
